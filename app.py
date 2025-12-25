@@ -8,18 +8,24 @@ import io
 import base64
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB max upload
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Force CPU (Render has no GPU)
+device = torch.device("cpu")
 
 # Class names
-class_names = ['Acne', 'Actinic_Keratosis', 'Bullous', 'Candidiasis', 'DrugEruption', 
-               'Infestations_Bites', 'Lichen', 'Lupus', 'Moles', 'Psoriasis', 
-               'Rosacea', 'Seborrh_Keratoses', 'SkinCancer', 'Sun_Sunlight_Damage', 
-               'Tinea', 'Unknown', 'Vascular_Tumors', 'Vasculitis', 
-               'Vitiligo', 'Warts']
+class_names = [
+    'Acne', 'Actinic_Keratosis', 'Bullous', 'Candidiasis', 'DrugEruption',
+    'Infestations_Bites', 'Lichen', 'Lupus', 'Moles', 'Psoriasis',
+    'Rosacea', 'Seborrh_Keratoses', 'SkinCancer', 'Sun_Sunlight_Damage',
+    'Tinea', 'Unknown', 'Vascular_Tumors', 'Vasculitis',
+    'Vitiligo', 'Warts'
+]
 NUM_CLASSES = len(class_names)
 
-# Load model
+# ------------------------------
+# Load model once at startup
+# ------------------------------
 model = EfficientNet.from_name("efficientnet-b0")
 model._fc = torch.nn.Linear(model._fc.in_features, NUM_CLASSES)
 state_dict = torch.load("CV_efficientnet_model.pth", map_location=device)
@@ -27,7 +33,9 @@ model.load_state_dict(state_dict)
 model.to(device)
 model.eval()
 
+# ------------------------------
 # Image preprocessing
+# ------------------------------
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -37,6 +45,9 @@ transform = transforms.Compose([
     )
 ])
 
+# ------------------------------
+# Routes
+# ------------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -49,7 +60,7 @@ def predict():
     file = request.files["image"]
     if file.filename == "":
         return render_template("index.html", prediction="No image selected")
-    
+
     # Read image in memory
     image_bytes = file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -64,11 +75,11 @@ def predict():
     prediction = class_names[pred.item()]
     confidence = confidence.item() * 100
 
-    # Convert image to Base64 for preview
+    # Convert image to Base64 for preview (JPEG, smaller memory)
     buffered = io.BytesIO()
-    image.save(buffered, format="PNG")
+    image.save(buffered, format="JPEG", quality=85)
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    img_data = f"data:image/png;base64,{img_str}"
+    img_data = f"data:image/jpeg;base64,{img_str}"
 
     return render_template(
         "index.html",
@@ -77,5 +88,8 @@ def predict():
         img_data=img_data
     )
 
+# ------------------------------
+# Run (for local testing)
+# ------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
