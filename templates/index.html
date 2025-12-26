@@ -1,159 +1,561 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Skin Disease Prediction</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Disease Prediction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #20a39e;
+            --light-bg: #f8f9fa;
+            --dark-text: #333;
+            --light-text: #666;
+        }
+        
         body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #f0f4f8, #d9e2ec);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            color: #102a43;
         }
-
-        h1 {
-            font-size: 2.5rem;
-            color: #334e68;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-
-        form {
-            background-color: #ffffff;
-            padding: 25px 30px;
+        
+        .header {
+            background: white;
             border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 350px;
-            transition: transform 0.2s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
         }
-
-        input[type="file"] {
-            margin: 10px 0;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
+        
+        .upload-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: border 0.2s ease;
         }
-
-        input[type="file"]:hover {
-            border-color: #7f9cf5;
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: #e8f4fd;
         }
-
-        button {
-            background-color: #4f46e5;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.3s ease, transform 0.2s ease;
+        
+        .upload-area.drag-over {
+            border-color: var(--accent-color);
+            background: #d4f4f4;
         }
-
-        button:hover {
-            background-color: #6366f1;
-            transform: scale(1.05);
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
         }
-
-        #preview {
-            max-width: 300px;
-            max-height: 300px;
-            margin-top: 15px;
+        
+        .image-preview-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             display: block;
-            object-fit: cover;
-            transition: transform 0.2s ease;
+            margin: 0 auto;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            display: none;
+        }
+        
+        .prediction-card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        
+        .prediction-card.high-severity {
+            border-top: 5px solid #dc3545;
+        }
+        
+        .prediction-card.medium-severity {
+            border-top: 5px solid #ffc107;
+        }
+        
+        .prediction-card.low-severity {
+            border-top: 5px solid #28a745;
         }
 
-        #preview:hover {
-            transform: scale(1.02);
+        .prediction-card.unknown-severity {
+            border-top: 5px solid gray;
         }
-
-        #pred {
-            background-color: #f0f4f8;
-            border-radius: 12px;
-            padding: 15px 20px;
+        
+        .confidence-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .confidence-circle-inner {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .confidence-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .confidence-label {
+            font-size: 0.8rem;
+            color: var(--light-text);
+        }
+        
+        .severity-badge {
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            display: inline-block;
+        }
+        
+        .severity-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .severity-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .severity-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .info-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
             margin-top: 20px;
+        }
+        
+        .info-section h6 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .loading-spinner {
+            display: none;
             text-align: center;
-            width: 300px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            padding: 30px;
         }
-
-        h2 {
-            color: #1e40af;
-            margin-bottom: 5px;
+        
+        .btn-predict {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 12px 40px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
-        h3 {
-            color: #334155;
-            margin-top: 0;
+        
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+            
+            .header, .upload-section, .results-section {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Skin Disease Prediction</h1>
-
-    <div style="display:flex;gap:10px;align-items:center;justify-content:center;">
-        <form id="predictForm" method="POST" action="/predict" enctype="multipart/form-data">
-            <input type="file" id="imageInput" name="image" accept="image/*" required>
-            <br>
-            <!-- Single image preview -->
-            <img id="preview" 
-                src="{% if img_data %}{{ img_data }}{% else %}#{% endif %}" 
-                alt="Uploaded Image" 
-                {% if not img_data %}style="display:none;"{% endif %}>
-            <br>
-            <button type="submit">Predict</button>
-        </form>
-
-        <div>
-            {% if prediction %}
-                <div id="pred">
-                    <h2>Prediction: {{ prediction }}</h2>
-                    <h3>Confidence: {{ confidence }}</h3>
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold text-primary mb-3 flex">
+                        <i class="fas fa-microscope me-10" style="margin-right: 25px;"></i>AI Skin Disease Classifier
+                    </h1>
+                    <p class="lead text-muted">
+                        Upload an image of the affected skin area to get an AI-powered prediction of possible skin conditions.
+                    </p>
                 </div>
-            {% else %}
-                <div id="pred" style="display:none;"></div>
-            {% endif %}
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h4 class="mb-4">
+                <i class="fas fa-cloud-upload-alt me-2"></i>Upload Skin Image
+            </h4>
+            
+            <form id="predictForm" method="POST" action="/predict" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-camera upload-icon"></i>
+                    <h5>Click to Upload or Drag & Drop</h5>
+                    <p class="text-muted mb-3">Select a clear image of the affected area</p>
+                    <input type="file" id="imageInput" name="image" accept="image/*" required style="display: none;">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('imageInput').click()">
+                        <i class="fas fa-folder-open me-2"></i>Choose Image
+                    </button>
+                </div>
+            </form>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <i class="fas fa-lightbulb text-warning fs-3 mb-2"></i>
+                            <h6>Good Lighting</h6>
+                            <p class="small mb-0">Ensure clear, well-lit photos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <i class="fas fa-search-plus text-info fs-3 mb-2"></i>
+                            <h6>Close-Up Shot</h6>
+                            <p class="small mb-0">Focus on the affected area</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <i class="fas fa-hand-sparkles text-success fs-3 mb-2"></i>
+                            <h6>Clean Skin</h6>
+                            <p class="small mb-0">Remove makeup or creams</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Preview -->
+        <div class="image-preview-container" id="previewContainer">
+            <h4 class="mb-4">
+                <i class="fas fa-image me-2"></i>Image Preview
+            </h4>
+            <img id="preview" class="image-preview" src="#" alt="Uploaded Image">
+            <div class="text-center mt-4">
+                <button type="button" class="btn btn-predict me-2" onclick="submitPrediction()">
+                    <i class="fas fa-brain me-2"></i>Predict Disease
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="clearImage()">
+                    <i class="fas fa-times me-2"></i>Remove Image
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h4 class="mt-3 text-primary">Analyzing image...</h4>
+            <p class="text-muted">Our AI is processing your image to identify skin conditions.</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <h3 class="text-primary mb-4">
+                <i class="fas fa-clipboard-check me-2"></i>Analysis Results
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="prediction-card card" id="predictionCard">
+                        <div class="card-body">
+                            <h4 class="card-title mb-3">
+                                <span id="diseaseName">Disease Name</span>
+                                <span class="severity-badge ms-2" id="severityBadge"></span>
+                            </h4>
+                            
+                            <p class="text-muted mb-4" id="diseaseDescription">
+                                Disease description will appear here.
+                            </p>
+                            
+                            <div class="info-section">
+                                <h6><i class="fas fa-exclamation-circle me-2"></i>Causes</h6>
+                                <p id="diseaseCauses" class="mb-0">Causes will appear here.</p>
+                            </div>
+                            
+                            <div class="info-section">
+                                <h6><i class="fas fa-shield-alt me-2"></i>Precautions</h6>
+                                <ul class="info-list" id="diseasePrecautions">
+                                    <li>Precautions will appear here</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="mb-4">Confidence Score</h5>
+                            <div class="confidence-circle">
+                                <div class="confidence-circle-inner">
+                                    <div class="confidence-value" id="confidenceValue">0%</div>
+                                    <div class="confidence-label">Confidence</div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> Higher confidence indicates more certainty in the prediction.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Disclaimer -->
+            <div class="alert alert-warning mt-4">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Medical Disclaimer</h5>
+                <p class="mb-0">
+                    This AI-powered prediction system is for informational and educational purposes only. 
+                    It is NOT a substitute for professional medical diagnosis or treatment. 
+                    Always consult a qualified dermatologist or healthcare provider for proper diagnosis, 
+                    treatment recommendations, and medical advice. If you have concerns about a skin condition, 
+                    please seek professional medical attention immediately.
+                </p>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const imageInput = document.getElementById('imageInput');
         const preview = document.getElementById('preview');
-        const predDiv = document.getElementById('pred');
+        const previewContainer = document.getElementById('previewContainer');
+        const uploadArea = document.getElementById('uploadArea');
         const form = document.getElementById('predictForm');
-
-        // Clear old prediction when image is changed
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resultsSection = document.getElementById('resultsSection');
+        
+        // Handle file selection
         imageInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.src = e.target.result;
-                    preview.style.display = 'block';
+                    previewContainer.style.display = 'block';
+                    resultsSection.style.display = 'none';
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 500)
                 }
                 reader.readAsDataURL(file);
-                predDiv.style.display = 'none'; // hide old prediction immediately
-            } else {
-                preview.src = '#';
-                preview.style.display = 'none';
             }
         });
-
-        // Optional: hide old prediction on form submit (prevents flicker)
-        form.addEventListener('submit', function() {
-            predDiv.style.display = 'none';
+        
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
         });
+        
+        uploadArea.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                imageInput.files = files;
+                imageInput.dispatchEvent(new Event('change'));
+            }
+        });
+        
+        // Submit prediction
+        async function submitPrediction() {
+            if (!imageInput.files[0]) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            loadingSpinner.style.display = 'block';
+            resultsSection.style.display = 'none';
+            
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                loadingSpinner.style.display = 'none';
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    previewContainer.style.display = 'block';
+                    return;
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                alert('Error making prediction. Please try again.');
+                console.error('Prediction error:', error);
+                previewContainer.style.display = 'block';
+            }
+        }
+        
+        // Display results
+        function displayResults(data) {
+            document.getElementById('diseaseName').textContent = data.prediction;
+            document.getElementById('confidenceValue').textContent = data.confidence;
+            document.getElementById('diseaseDescription').textContent = data.description;
+            document.getElementById('diseaseCauses').textContent = data.causes;
+            
+            // Set severity
+            const severityBadge = document.getElementById('severityBadge');
+            const predictionCard = document.getElementById('predictionCard');
+            severityBadge.textContent = data.severity + ' Severity';
+            severityBadge.className = 'severity-badge ms-2 severity-' + data.severity.toLowerCase();
+            predictionCard.className = 'prediction-card card ' + data.severity.toLowerCase() + '-severity';
+            
+            // Display precautions
+            const precautionsList = document.getElementById('diseasePrecautions');
+            precautionsList.innerHTML = '';
+            data.precautions.forEach(precaution => {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>' + precaution;
+                precautionsList.appendChild(li);
+            });
+            
+            resultsSection.style.display = 'block';
+            resultsSection.classList.add('fade-in');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Clear image
+        function clearImage() {
+            imageInput.value = '';
+            preview.src = '#';
+            previewContainer.style.display = 'none';
+            resultsSection.style.display = 'none';
+        }
+        
+        // Initialize from server data (if any)
+        {% if img_data %}
+        window.onload = function() {
+            preview.src = "{{ img_data }}";
+            previewContainer.style.display = 'none';
+            
+            const data = {
+                prediction: "{{ prediction }}",
+                confidence: "{{ confidence }}",
+                description: "{{ description }}",
+                causes: "{{ causes }}",
+                severity: "{{ severity }}",
+                precautions: {{ precautions_json | safe }}
+            };
+            
+            displayResults(data);
+        };
+        {% endif %}
     </script>
 </body>
 </html>
